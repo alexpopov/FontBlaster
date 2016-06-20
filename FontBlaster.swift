@@ -109,7 +109,7 @@ private extension FontBlaster {
             for item in contents {
                 if let url = NSURL(string: path) where item.containsString(".bundle") {
                     let urlPath = url.URLByAppendingPathComponent(item)
-                    loadFontsForBundleWithPath(urlPath.absoluteString)
+                    loadFontsForBundleWithPath(urlPath!.absoluteString!)
                 }
             }
         } catch let error as NSError {
@@ -135,30 +135,19 @@ private extension FontBlaster {
         var fontError: Unmanaged<CFError>?
         
         let fontData = NSData(contentsOfURL: fontFileURL)
-        let dataProvider = CGDataProviderCreateWithCFData(fontData)
-        if let fontRef = CGFontCreateWithDataProvider(dataProvider) {
+        let dataProvider = CGDataProviderCreateWithCFData(fontData!)
+        let fontRef = CGFontCreateWithDataProvider(dataProvider!)
 
-            if CTFontManagerRegisterGraphicsFont(fontRef, &fontError) {
+        if CTFontManagerRegisterGraphicsFont(fontRef, &fontError) {
 
-                if let postScriptName = CGFontCopyPostScriptName(fontRef) {
-                    printStatus("Successfully loaded font: '\(postScriptName)'.")
-                    loadedFonts.append(String(postScriptName))
-                }
+          if let postScriptName = CGFontCopyPostScriptName(fontRef) {
+            printStatus("Successfully loaded font: '\(postScriptName)'.")
+            loadedFonts.append(String(postScriptName))
+          }
 
-            } else if let fontError = fontError?.takeRetainedValue() {
-                let errorDescription = CFErrorCopyDescription(fontError)
-                printStatus("Failed to load font '\(fontName)': \(errorDescription)")
-            }
-            
-        } else {
-
-            guard let fontError = fontError?.takeRetainedValue() else {
-                printStatus("Failed to load font '\(fontName)'.")
-                return
-            }
-
-            let errorDescription = CFErrorCopyDescription(fontError)
-            printStatus("Failed to load font '\(fontName)': \(errorDescription)")
+        } else if let fontError = fontError?.takeRetainedValue() {
+          let errorDescription = CFErrorCopyDescription(fontError)
+          printStatus("Failed to load font '\(fontName)': \(errorDescription)")
         }
 
     }
